@@ -255,10 +255,21 @@ static void update_hex(struct device *dev,
 	}
 }
 
-static void update_int(struct device *dev,
+static void update_uint(struct device *dev,
 		char msg[MSG_LEN],
 		unsigned int *old_int,
 		unsigned int new_int)
+{
+	if (*old_int != new_int) {
+		dev_info(dev, "%s %u -> %u", msg, *old_int, new_int);
+		*old_int = new_int;
+	}
+}
+
+static void update_int(struct device *dev,
+		char msg[MSG_LEN],
+		int *old_int,
+		int new_int)
 {
 	if (*old_int != new_int) {
 		dev_info(dev, "%s %d -> %d", msg, *old_int, new_int);
@@ -304,8 +315,8 @@ static void update_subdev(struct device *dev,
 					new_sd->i2c.board_info.platform_data;
 
 	/* csi2 */
-	update_int(dev, "CSI2 port", &(*old_sd)->csi2->port, new_sd->csi2->port);
-	update_int(dev, "CSI2 nlanes", &(*old_sd)->csi2->nlanes, new_sd->csi2->nlanes);
+	update_uint(dev, "CSI2 port", &(*old_sd)->csi2->port, new_sd->csi2->port);
+	update_uint(dev, "CSI2 nlanes", &(*old_sd)->csi2->nlanes, new_sd->csi2->nlanes);
 
 	/* i2c */
 	update_short(dev, "I2C board_info addr", &(*old_sd)->i2c.board_info.addr,
@@ -314,14 +325,14 @@ static void update_subdev(struct device *dev,
 		new_sd->i2c.i2c_adapter_bdf);
 
 	/* platform data */
-	update_int(dev, "pdata port", &(old_pdata)->port, new_pdata->port);
-	update_int(dev, "pdata lanes", &(old_pdata)->lanes, new_pdata->lanes);
+	update_uint(dev, "pdata port", &(old_pdata)->port, new_pdata->port);
+	update_uint(dev, "pdata lanes", &(old_pdata)->lanes, new_pdata->lanes);
 	update_hex(dev, "pdata I2C slave addr", &(old_pdata)->i2c_slave_address,
 		new_pdata->i2c_slave_address);
-	update_int(dev, "pdata irq_pin", &(old_pdata)->irq_pin, new_pdata->irq_pin);
+	update_int(dev, "pdata irq_pin", (unsigned int *)&(old_pdata)->irq_pin, new_pdata->irq_pin);
 	update_str(dev, "pdata irq_pin_name", old_pdata->irq_pin_name, new_pdata->irq_pin_name);
-	update_int(dev, "pdata reset_pin", &(old_pdata)->reset_pin, new_pdata->reset_pin);
-	update_int(dev, "pdata detect_pin", &(old_pdata)->detect_pin, new_pdata->detect_pin);
+	update_int(dev, "pdata reset_pin", (unsigned int *)&(old_pdata)->reset_pin, new_pdata->reset_pin);
+	update_int(dev, "pdata detect_pin", (unsigned int *)&(old_pdata)->detect_pin, new_pdata->detect_pin);
 	update_inta(dev, "pdata gpios", old_pdata->gpios, new_pdata->gpios, IPU_SPDATA_GPIO_NUM);
 }
 
@@ -340,8 +351,8 @@ static void update_serdes_subdev(struct device *dev,
 	struct serdes_module_pdata *old_mpdata, *new_mpdata;
 
 	/* csi2 */
-	update_int(dev, "CSI2 port", &(*old_sd)->csi2->port, new_sd->csi2->port);
-	update_int(dev, "CSI2 nlanes", &(*old_sd)->csi2->nlanes, new_sd->csi2->nlanes);
+	update_uint(dev, "CSI2 port", &(*old_sd)->csi2->port, new_sd->csi2->port);
+	update_uint(dev, "CSI2 nlanes", &(*old_sd)->csi2->nlanes, new_sd->csi2->nlanes);
 
 	/* i2c */
 	update_short(dev, "I2C board_info addr", &(*old_sd)->i2c.board_info.addr,
@@ -349,9 +360,9 @@ static void update_serdes_subdev(struct device *dev,
 	update_str(dev, "I2C i2c_adapter_bdf", (*old_sd)->i2c.i2c_adapter_bdf,
 		new_sd->i2c.i2c_adapter_bdf);
 
-	update_int(dev, "I2C Pdata reset_gpio", &old_pdata->reset_gpio,
+	update_uint(dev, "I2C Pdata reset_gpio", &old_pdata->reset_gpio,
 		new_pdata->reset_gpio);
-	update_int(dev, "I2C Pdata FPD_gpio", &old_pdata->FPD_gpio, new_pdata->FPD_gpio);
+	update_uint(dev, "I2C Pdata FPD_gpio", &old_pdata->FPD_gpio, new_pdata->FPD_gpio);
 
 	/* platform data */
 	for (i = 0; i < SERDES_MAX_PORT; i++) {
@@ -371,10 +382,11 @@ static void update_serdes_subdev(struct device *dev,
 				new_sdinfo->board_info.addr);
 
 			if (!strcmp(old_mpdata->module_name, new_mpdata->module_name)) {
-				update_int(dev, "mPdata lanes", &old_mpdata->lanes,
+				update_uint(dev, "mPdata lanes", &old_mpdata->lanes,
 					new_mpdata->lanes);
-				update_int(dev, "mPdata fsin", &old_mpdata->fsin,
-					new_mpdata->fsin);
+				update_int(dev, "mPdata fsin",
+					   (unsigned int *)&old_mpdata->fsin,
+					   new_mpdata->fsin);
 				update_inta(dev, "mPdata gpio_powerup_seq",
 						(int *)old_mpdata->gpio_powerup_seq,
 						(int *)new_mpdata->gpio_powerup_seq,
